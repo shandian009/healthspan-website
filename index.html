@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生命时间管理</title>
+    <style>
+        :root {
+            --primary: #3a7bd5;
+            --secondary: #00d2ff;
+            --dark: #333;
+            --light: #f8f9fa;
+            --gray: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        .page {
+            min-height: 100vh;
+            display: none;
+            padding: 20px 0;
+        }
+        .active {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .btn:active {
+            transform: translateY(1px);
+        }
+        h1, h2, h3 {
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 30px;
+        }
+        h2 {
+            font-size: 2.2rem;
+        }
+        h3 {
+            font-size: 1.8rem;
+        }
+        p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+        
+        /* Home Page */
+        #home {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://source.unsplash.com/random/1920x1080/?healthy,lifestyle') no-repeat center center/cover;
+            color: white;
+            text-align: center;
+        }
+        .slogan {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            max-width: 800px;
+        }
+        
+        /* Input Page */
+        .form-group {
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 500px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        .radio-group {
+            display: flex;
+            gap: 20px;
+        }
+        .radio-option {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        .radio-option input {
+            margin-right: 8px;
+        }
+        .loader {
+            display: none;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Results Page */
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        .days-left {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            margin: 30px 0;
+            height: 20px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+        
+        /* Dashboard */
+        .dashboard {
+            width: 100%;
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            height: 300px;
+            margin-bottom: 30px;
+        }
+        .input-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .slider {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .slogan {
+                font-size: 1.8rem;
+            }
+            h1 {
+                font-size: 2.2rem;
+            }
+            h2 {
+                font-size: 1.8rem;
+            }
+            .days-left {
+                font-size: 3rem;
+            }
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .input-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Home Page -->
+    <section id="home" class="page active">
+        <div class="container">
+            <h1>生命时间管理</h1>
+            <p class="slogan">掌控你的生命时间，活出精彩每一天</p>
+            <button class="btn" id="startBtn">开始你的生命之旅</button>
+        </div>
+    </section>
+
+    <!-- Input Page -->
+    <section id="input" class="page">
+        <div class="container">
+            <h2>初始信息输入</h2>
+            <p>请填写以下信息，帮助我们计算您的生命指标</p>
+            
+            <form id="infoForm">
+                <div class="form-group">
+                    <label for="age">当前年龄</label>
+                    <input type="number" id="age" class="form-control" required min="1" max="120">
+                </div>
+                
+                <div class="form-group">
+                    <label>性别</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="gender" value="male" required> 男性
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="gender" value="female"> 女性
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="weight">体重 (kg)</label>
+                    <input type="number" id="weight" class="form-control" required min="20" max="300">
+                </div>
+                
+                <div class="form-group">
+                    <label for="height">身高 (cm)</label>
+                    <input type="number" id="height" class="form-control" required min="50" max="250">
+                </div>
+                
+                <div class="form-group">
+                    <label for="smoking">吸烟史</label>
+                    <select id="smoking" class="form-control">
+                        <option value="none">不吸烟</option>
+                        <option value="light">轻度吸烟（每天少于10支）</option>
+                        <option value="heavy">重度吸烟（每天10支以上）</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="alcohol">饮酒量</label>
+                    <select id="alcohol" class="form-control">
+                        <option value="none">不饮酒</option>
+                        <option value="light">轻度饮酒（每周1-2次）</option>
+                        <option value="moderate">中度饮酒（每周3-5次）</option>
+                        <option value="heavy">重度饮酒（每天饮酒）</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn" id="calculateBtn">计算我的剩余生命天数</button>
+            </form>
+            
+            <div class="loader" id="loader"></div>
+        </div>
+    </section>
+
+    <!-- Results Page -->
+    <section id="results" class="page">
+        <div class="container">
+            <div class="result-card">
+                <h2>您的生命时间分析</h2>
+                
+                <p>根据您提供的信息，我们计算出：</p>
+                <div class="days-left" id="daysLeft">25,550</div>
+                <p>剩余生命天数</p>
+                
+                <div class="progress-container">
+                    <div class="progress-bar" id="lifeProgress"></div>
+                </div>
+                <p id="progressText">您已度过生命的 30%，还有 70% 的精彩等待您创造</p>
+                
+                <div class="card">
+                    <h3>初步健康建议</h3>
+                    <p id="healthAdvice">根据您的身体状况，我们建议您保持规律作息，增加运动量，注意饮食均衡。</p>
+                </div>
+                
+                <button class="btn" id="dashboardBtn">开始每日记录，优化你的生命天数</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Page -->
+    <section id="dashboard" class="page">
+        <div class="container">
+            <div class="dashboard-header">
+                <h2>生命优化仪表盘</h2>
+                <div>
+                    <span>今日生命变化：</span>
+                    <span id="todayChange" style="font-weight: bold; color: var(--success)">+0.5 天</span>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>每日数据记录</h3>
+                <form id="dailyForm">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="sleep">睡眠时间 (小时)</label>
+                            <input type="number" id="sleep" class="form-control" min="0" max="24" step="0.5" value="7">
+                        </div>
+                        <div class="input-group">
+                            <label for="exercise">锻炼时间 (分钟)</label>
+                            <input type="number" id="exercise" class="form-control" min="0" max="300" value="30">
+                        </div>
+                    </div>
+                    
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="caloriesIn">摄入能量 (卡路里)</label>
+                            <input type="number" id="caloriesIn" class="form-control" min="0" max="5000" value="2000">
+                        </div>
+                        <div class="input-group">
+                            <label for="caloriesOut">消耗能量 (卡路里)</label>
+                            <input type="number" id="caloriesOut" class="form-control" min="0" max="5000" value="2200">
+                        </div>
+                    </div>
+                    
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="overtime">加班时间 (小时)</label>
+                            <input type="number" id="overtime" class="form-control" min="0" max="24" step="0.5" value="1">
+                        </div>
+                        <div class="input-group">
+                            <label for="stress">压力水平 (1-10)</label>
+                            <input type="range" id="stress" class="slider" min="1" max="10" value="5">
+                            <div id="stressValue" style="text-align: center;">5</div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn">更新今日数据</button>
+                </form>
+            </div>
+            
+            <div class="card">
+                <h3>生命天数变化趋势</h3>
+                <div class="chart-container">
+                    <canvas id="lifeTrendChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>健康指标分析</h3>
+                <div style="display: flex; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 300px;">
+                        <h4>睡眠时间分布</h4>
+                        <div class="chart-container">
+                            <canvas id="sleepChart"></canvas>
+                        </div>
+                    </div>
+                    <div style="flex: 1; min-width: 300px;">
+                        <h4>能量摄入与消耗平衡</h4>
+                        <div class="chart-container">
+                            <canvas id="energyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>个性化健康建议</h3>
+                <ul id="recommendations">
+                    <li>增加每日睡眠时间至7-8小时，有助于提升免疫力</li>
+                    <li>建议每周进行3-5次中等强度有氧运动，每次30分钟以上</li>
+                    <li>减少加班时间，保持工作与生活平衡</li>
+                    <li>尝试冥想或深呼吸练习，缓解日常压力</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Navigation Functions
+        document.getElementById('startBtn').addEventListener('click', () => showPage('input'));
+        document.getElementById('infoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('loader').style.display = 'block';
+            setTimeout(() => {
+                calculateLifeExpectancy();
+                document.getElementById('loader').style.display = 'none';
+                showPage('results');
+            }, 1500);
+        });
+        document.getElementById('dashboardBtn').addEventListener('click', () => {
+            showPage('dashboard');
+            initCharts();
+        });
+        
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
+        
+        // Life Expectancy Calculation
+        function calculateLifeExpectancy() {
+            const age = parseInt(document.getElementById('age').value);
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const smoking = document.getElementById('smoking').value;
+            const alcohol = document.getElementById('alcohol').value;
+            
+            // Basic life expectancy calculation (simplified)
+            let baseExpectancy = gender === 'male' ? 76 : 81;
+            
+            // BMI adjustment
+            const bmi = weight / ((height / 100) ** 2);
+            if (bmi < 18.5 || bmi > 30) {
+                baseExpectancy -= 2;
+            }
+            
+            // Smoking adjustment
+            if (smoking === 'light') baseExpectancy -= 5;
+            if (smoking === 'heavy') baseExpectancy -= 10;
+            
+            // Alcohol adjustment
+            if (alcohol === 'moderate') baseExpectancy -= 1;
+            if (alcohol === 'heavy') baseExpectancy -= 3;
+            
+            // Calculate remaining days
+            const remainingYears = baseExpectancy - age;
+            const remainingDays = Math.max(0, Math.round(remainingYears * 365));
+            
+            // Update UI
+            document.getElementById('daysLeft').textContent = remainingDays.toLocaleString();
+            
+            // Update progress bar
+            const livedPercentage = (age / baseExpectancy) * 100;
+            const remainingPercentage = 100 - livedPercentage;
+            document.getElementById('lifeProgress').style.width = `${livedPercentage}%`;
+            document.getElementById('progressText').textContent = 
+                `您已度过生命的 ${Math.round(livedPercentage)}%，还有 ${Math.round(remainingPercentage)}% 的精彩等待您创造`;
+            
+            // Generate health advice
+            let advice = "根据您的身体状况，我们建议您";
+            if (bmi < 18.5) {
+                advice += "增加营养摄入，适当增重；";
+            } else if (bmi > 25) {
+                advice += "控制饮食，增加运动量，逐步减重；";
+            } else {
+                advice += "保持当前的健康体重；";
+            }
+            
+            if (smoking !== 'none') {
+                advice += "尽快戒烟，减少对健康的损害；";
+            }
+            
+            if (alcohol !== 'none') {
+                advice += "减少酒精摄入，保护肝脏健康；";
+            }
+            
+            advice += "保持规律作息，每天保证7-8小时的充足睡眠。";
+            document.getElementById('healthAdvice').textContent = advice;
+        }
+        
+        // Dashboard Functionality
+        document.getElementById('stress').addEventListener('input', function() {
+            document.getElementById('stressValue').textContent = this.value;
+        });
+        
+        document.getElementById('dailyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            updateDashboard();
+        });
+        
+        function updateDashboard() {
+            const sleep = parseFloat(document.getElementById('sleep').value);
+            const exercise = parseFloat(document.getElementById('exercise').value);
+            const caloriesIn = parseFloat(document.getElementById('caloriesIn').value);
+            const caloriesOut = parseFloat(document.getElementById('caloriesOut').value);
+            const overtime = parseFloat(document.getElementById('overtime').value);
+            const stress = parseFloat(document.getElementById('stress').value);
+            
+            // Calculate daily life change (simplified algorithm)
+            let change = 0;
+            
+            // Sleep impact
+            if (sleep >= 7 && sleep <= 9) change += 0.2;
+            else if (sleep < 6 || sleep > 10) change -= 0.3;
+            
+            // Exercise impact
+            change += exercise / 100;
+            
+            // Calorie balance
+            if (caloriesOut > caloriesIn) change += 0.1;
+            else if (caloriesIn > caloriesOut + 500) change -= 0.2;
+            
+            // Overtime impact
+            change -= overtime * 0.1;
+            
+            // Stress impact
+            change -= (stress - 5) * 0.05;
+            
+            // Update UI
+            const changeText = change >= 0 ? `+${change.toFixed(1)} 天` : `${change.toFixed(1)} 天`;
+            const changeElement = document.getElementById('todayChange');
+            changeElement.textContent = changeText;
+            changeElement.style.color = change >= 0 ? 'var(--success)' : 'var(--danger)';
+            
+            // Update charts (would be implemented with a real chart library)
+            updateCharts(sleep, exercise, caloriesIn, caloriesOut, change);
+            
+            alert('今日数据已更新！您的生命天数变化: ' + changeText);
+        }
+        
+        // Mock chart data and initialization
+        let mockChartData = {
+            lifeTrend: Array(7).fill(0).map((_, i) => 0.2 - 0.1 * Math.sin(i)),
+            sleepHours: Array(7).fill(0).map((_, i) => 6.5 + Math.random()),
+            energyBalance: Array(7).fill(0).map((_, i) => Math.random() * 300 - 150)
+        };
+        
+        function initCharts() {
+            // In a real implementation, this would use Chart.js or similar
+            console.log("Charts initialized with mock data");
+        }
+        
+        function updateCharts(sleep, exercise, caloriesIn, caloriesOut, change) {
+            // Update mock data
+            mockChartData.lifeTrend.push(change);
+            mockChartData.lifeTrend.shift();
+            
+            mockChartData.sleepHours.push(sleep);
+            mockChartData.sleepHours.shift();
+            
+            mockChartData.energyBalance.push(caloriesOut - caloriesIn);
+            mockChartData.energyBalance.shift();
+            
+            console.log("Charts updated with new data");
+        }
+    </script>
+</body>
+</html>
